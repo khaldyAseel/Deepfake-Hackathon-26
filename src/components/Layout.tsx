@@ -44,7 +44,8 @@ export function DisclaimerBanner() {
       animate={{ opacity: 1, y: 0 }}
       className="relative z-10 mx-auto mb-8 max-w-3xl rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 text-center text-xs text-amber-200/80 backdrop-blur-sm"
     >
-      Demo only — results are simulated until connected to the detection model.
+      Demo only — results are simulated by the Python server until a real
+      detection model is connected.
     </motion.div>
   )
 }

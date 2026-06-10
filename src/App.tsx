@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { HeroSection } from './components/HeroSection'
 import {
@@ -12,14 +12,16 @@ import {
   DisclaimerBanner,
   Footer,
 } from './components/Layout'
+import { analyzeVideo } from './api/analyze'
 import type { AnalysisResult, AppPhase } from './types'
-import { generateMockResult } from './utils/analysis'
 
 function App() {
   const [phase, setPhase] = useState<AppPhase>('idle')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const analysisPromiseRef = useRef<Promise<AnalysisResult> | null>(null)
 
   useRevokePreview(previewUrl)
 
@@ -29,16 +31,29 @@ function App() {
     setPreviewUrl(url)
     setPhase('uploaded')
     setResult(null)
+    setError(null)
   }, [previewUrl])
 
   const handleAnalyze = useCallback(() => {
-    setPhase('analyzing')
-  }, [])
+    if (!selectedFile) return
 
-  const handleAnalysisComplete = useCallback(() => {
-    const mockResult = generateMockResult()
-    setResult(mockResult)
-    setPhase('result')
+    setError(null)
+    setPhase('analyzing')
+    analysisPromiseRef.current = analyzeVideo(selectedFile)
+  }, [selectedFile])
+
+  const handleAnalysisComplete = useCallback(async () => {
+    try {
+      const analysisResult = await analysisPromiseRef.current
+      if (!analysisResult) {
+        throw new Error('No analysis result received.')
+      }
+      setResult(analysisResult)
+      setPhase('result')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Analysis failed.')
+      setPhase('uploaded')
+    }
   }, [])
 
   const handleReset = useCallback(() => {
@@ -46,6 +61,8 @@ function App() {
     setSelectedFile(null)
     setPreviewUrl(null)
     setResult(null)
+    setError(null)
+    analysisPromiseRef.current = null
     setPhase('idle')
   }, [previewUrl])
 
@@ -62,6 +79,12 @@ function App() {
         <HeroSection />
 
         <div className="mt-12 flex flex-col items-center gap-8">
+          {error && showUpload && (
+            <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-300">
+              {error}
+            </p>
+          )}
+
           <AnimatePresence mode="wait">
             {showUpload && (
               <UploadSection

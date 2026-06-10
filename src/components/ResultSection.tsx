@@ -181,8 +181,8 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
 
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
             <p className="text-center text-xs text-slate-500 sm:text-left">
-              Demo only — results are simulated until connected to the detection
-              model.
+              Demo only — results are simulated by the Python server until a
+              real detection model is connected.
             </p>
 
             <motion.button

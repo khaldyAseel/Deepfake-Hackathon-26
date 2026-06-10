@@ -1,5 +1,4 @@
-import type { AnalysisResult, ResultCategory } from '../types'
-import { METRIC_LABELS } from '../types'
+import type { ResultCategory } from '../types'
 
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B'
@@ -35,21 +34,4 @@ export function getCategoryDescription(category: ResultCategory): string {
     case 'live':
       return 'Facial dynamics and sync patterns align with a genuine live recording.'
   }
-}
-
-export function generateMockResult(): AnalysisResult {
-  const score = Math.floor(Math.random() * 101)
-  const category = getResultCategory(score)
-
-  const metrics = METRIC_LABELS.map((label) => {
-    const variance = Math.floor(Math.random() * 25) - 12
-    const value = Math.min(100, Math.max(0, score + variance))
-    return { label, value, icon: label }
-  })
-
-  return { score, category, metrics }
-}
-
-export function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
 }
