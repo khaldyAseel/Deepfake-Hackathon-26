@@ -5,13 +5,28 @@ export type ResultCategory = 'fake' | 'suspicious' | 'live'
 export interface MetricScore {
   label: string
   value: number
-  icon: string
+  icon?: string
+}
+
+export interface RawSummary {
+  frames_analyzed: number
+  max_fake_score: number
+  mean_fake_score: number
+}
+
+export interface ProblematicFrame {
+  frameIndex: number
+  fakeScore: number
+  timestampSeconds: number
+  imageUrl: string
 }
 
 export interface AnalysisResult {
   score: number
   category: ResultCategory
   metrics: MetricScore[]
+  raw_summary?: RawSummary
+  problematic_frames?: ProblematicFrame[]
 }
 
 export const ANALYSIS_STEPS = [

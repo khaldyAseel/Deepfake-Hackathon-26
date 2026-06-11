@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import shutil
 import uuid
@@ -21,6 +23,7 @@ model = load_detector(MODEL_PATH)
 from analysis import (
     ALLOWED_CONTENT_TYPES,
     ALLOWED_EXTENSIONS,
+    format_problematic_frames,
     generate_mock_result,
 )
 
@@ -135,6 +138,10 @@ async def analyze_video_v2(video: UploadFile = File(...)) -> dict:
         return {
             "score": score,
             "category": category,
+            "raw_summary": report["raw_summary"],
+            "problematic_frames": format_problematic_frames(
+                report["top_suspicious_frames"]
+            ),
             "metrics": [
                 {
                     "label": "Deepfake Risk",

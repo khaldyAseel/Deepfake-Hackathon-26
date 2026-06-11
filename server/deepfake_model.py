@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import math
@@ -489,6 +491,6 @@ def score_video(
         "calibrated_result": calibrated,
         "audio_result": audio_result,
         "top_suspicious_frames": top_df[
-            ["image_path", "fake_score", "approx_second"]
+            ["image_path", "fake_score", "approx_second", "frame_number"]
         ].to_dict(orient="records"),
     }

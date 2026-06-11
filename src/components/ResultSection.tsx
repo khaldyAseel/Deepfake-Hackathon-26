@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { AnalysisResult, ResultCategory } from '../types';
 import { getCategoryDescription, getCategoryLabel } from '../utils/analysis';
+import { ProblematicFramesSection } from './ProblematicFramesSection';
 
 interface ResultSectionProps {
   result: AnalysisResult;
@@ -209,6 +210,10 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
               );
             })}
           </div>
+
+          <ProblematicFramesSection
+            frames={result.problematic_frames ?? []}
+          />
 
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
             <motion.button
