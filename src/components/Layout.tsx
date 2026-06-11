@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion } from 'framer-motion';
 
 export function BackgroundEffects() {
   return (
@@ -24,28 +24,15 @@ export function BackgroundEffects() {
         }}
       />
     </div>
-  )
+  );
 }
 
 export function Footer() {
   return (
     <footer className="relative z-10 mt-auto border-t border-white/5 py-6 text-center">
       <p className="text-xs text-slate-500">
-        LiveCheck AI Demo · Frontend prototype · No real detection performed
+        LiveCheck AI Demo · Frontend prototype · With real detection
       </p>
     </footer>
-  )
-}
-
-export function DisclaimerBanner() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="relative z-10 mx-auto mb-8 max-w-3xl rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 text-center text-xs text-amber-200/80 backdrop-blur-sm"
-    >
-      Demo only — results are simulated by the Python server until a real
-      detection model is connected.
-    </motion.div>
-  )
+  );
 }

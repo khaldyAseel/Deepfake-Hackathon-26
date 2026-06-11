@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion'
-import { Shield, Sparkles } from 'lucide-react'
+import { motion } from 'framer-motion';
+import { Shield, Sparkles } from 'lucide-react';
 
 export function HeroSection() {
   return (
@@ -27,10 +27,9 @@ export function HeroSection() {
         </h1>
 
         <p className="mt-4 text-lg text-slate-300 sm:text-xl">
-          Detect whether a video is live, recorded, or manipulated using
-          AI-powered liveness analysis.
+          Detect whether a video is recorded, or manipulated using AI-powered
+          liveness analysis.
         </p>
-
       </motion.div>
 
       <motion.div
@@ -56,5 +55,5 @@ export function HeroSection() {
         ))}
       </motion.div>
     </section>
-  )
+  );
 }

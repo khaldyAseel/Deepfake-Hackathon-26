@@ -13,6 +13,10 @@ import torch.nn as nn
 from torchvision import transforms
 from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
 
+import subprocess
+import tempfile
+import librosa
+
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -199,6 +203,106 @@ def crop_faces_from_frames(
 
     return crop_paths
 
+def extract_audio_from_video(video_path: Path, output_wav: Path) -> bool:
+    command = [
+        "ffmpeg",
+        "-y",
+        "-i", str(video_path),
+        "-vn",
+        "-acodec", "pcm_s16le",
+        "-ar", "16000",
+        "-ac", "1",
+        str(output_wav),
+    ]
+
+    result = subprocess.run(
+        command,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    return result.returncode == 0 and output_wav.exists()
+
+
+def analyze_audio(video_path: str | Path) -> dict:
+    video_path = Path(video_path)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        audio_path = Path(tmpdir) / "audio.wav"
+
+        has_audio = extract_audio_from_video(video_path, audio_path)
+
+        if not has_audio:
+            return {
+                "has_audio": False,
+                "audio_score": 50,
+                "audio_flags": ["No audio track detected"],
+            }
+
+        y, sr = librosa.load(audio_path, sr=16000)
+
+        if len(y) == 0:
+            return {
+                "has_audio": False,
+                "audio_score": 50,
+                "audio_flags": ["Empty audio track"],
+            }
+
+        rms = librosa.feature.rms(y=y)[0]
+        silence_ratio = float(np.mean(rms < 0.01))
+
+        spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)[0]
+        spectral_bandwidth = librosa.feature.spectral_bandwidth(y=y, sr=sr)[0]
+        zero_crossing_rate = librosa.feature.zero_crossing_rate(y)[0]
+
+        rms_mean = float(np.mean(rms))
+        rms_std = float(np.std(rms))
+        centroid_mean = float(np.mean(spectral_centroid))
+        bandwidth_mean = float(np.mean(spectral_bandwidth))
+        zcr_mean = float(np.mean(zero_crossing_rate))
+
+        flags = []
+        audio_score = 0
+
+        if silence_ratio > 0.55:
+            audio_score += 25
+            flags.append("High silence ratio")
+
+        if rms_std < 0.005:
+            audio_score += 20
+            flags.append("Very flat volume dynamics")
+
+        if centroid_mean > 3500:
+            audio_score += 20
+            flags.append("Unusually sharp/high-frequency audio")
+
+        if bandwidth_mean < 800:
+            audio_score += 15
+            flags.append("Narrow audio bandwidth")
+
+        if zcr_mean > 0.20:
+            audio_score += 20
+            flags.append("Noisy or unstable waveform")
+
+        audio_score = min(audio_score, 100)
+
+        if not flags:
+            flags.append("No obvious basic audio anomaly detected")
+
+        return {
+            "has_audio": True,
+            "audio_score": round(audio_score, 2),
+            "audio_flags": flags,
+            "audio_features": {
+                "rms_mean": rms_mean,
+                "rms_std": rms_std,
+                "silence_ratio": silence_ratio,
+                "spectral_centroid_mean": centroid_mean,
+                "spectral_bandwidth_mean": bandwidth_mean,
+                "zero_crossing_rate_mean": zcr_mean,
+            },
+        }
+
 
 @torch.no_grad()
 def predict_face_batch(
@@ -362,6 +466,20 @@ def score_video(
         calibration,
     )
 
+    audio_result = analyze_audio(video_path)
+
+    visual_probability = calibrated["deepfake_probability_0_100"]
+    audio_probability = audio_result["audio_score"]
+
+    fused_probability = round(
+        0.80 * visual_probability + 0.20 * audio_probability,
+        2,
+    )
+
+    calibrated["visual_probability_0_100"] = visual_probability
+    calibrated["audio_probability_0_100"] = audio_probability
+    calibrated["deepfake_probability_0_100"] = fused_probability
+
     top_df = scores_df.sort_values("fake_score", ascending=False).head(10).copy()
     top_df["approx_second"] = top_df["frame_number"] / cfg.fps_sample
 
@@ -369,6 +487,7 @@ def score_video(
         "video": video_path.name,
         "raw_summary": raw_summary,
         "calibrated_result": calibrated,
+        "audio_result": audio_result,
         "top_suspicious_frames": top_df[
             ["image_path", "fake_score", "approx_second"]
         ].to_dict(orient="records"),
