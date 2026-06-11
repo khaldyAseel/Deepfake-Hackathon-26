@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion } from 'framer-motion';
 import {
   Eye,
   Headphones,
@@ -7,27 +7,24 @@ import {
   ShieldAlert,
   RotateCcw,
   TrendingUp,
-} from 'lucide-react'
-import type { AnalysisResult, ResultCategory } from '../types'
-import {
-  getCategoryDescription,
-  getCategoryLabel,
-} from '../utils/analysis'
+} from 'lucide-react';
+import type { AnalysisResult, ResultCategory } from '../types';
+import { getCategoryDescription, getCategoryLabel } from '../utils/analysis';
 
 interface ResultSectionProps {
-  result: AnalysisResult
-  onReset: () => void
+  result: AnalysisResult;
+  onReset: () => void;
 }
 
 const categoryStyles: Record<
   ResultCategory,
   {
-    badge: string
-    score: string
-    bar: string
-    marker: string
-    glow: string
-    icon: typeof ShieldAlert
+    badge: string;
+    score: string;
+    bar: string;
+    marker: string;
+    glow: string;
+    icon: typeof ShieldAlert;
   }
 > = {
   fake: {
@@ -54,26 +51,58 @@ const categoryStyles: Record<
     glow: 'shadow-glow-emerald',
     icon: ScanFace,
   },
-}
+};
 
-const metricIcons = [ScanFace, Eye, Move3d, Headphones, ShieldAlert]
+const metricIcons = [ScanFace, Eye, Move3d, Headphones, ShieldAlert];
 
 function getMetricColor(value: number): string {
-  if (value <= 30) return 'text-red-400'
-  if (value <= 60) return 'text-amber-400'
-  return 'text-emerald-400'
+  if (value <= 30) return 'text-red-400';
+  if (value <= 60) return 'text-amber-400';
+  return 'text-emerald-400';
 }
 
 function getMetricBarColor(value: number): string {
-  if (value <= 30) return 'bg-red-500'
-  if (value <= 60) return 'bg-amber-500'
-  return 'bg-emerald-500'
+  if (value <= 30) return 'bg-red-500';
+  if (value <= 60) return 'bg-amber-500';
+  return 'bg-emerald-500';
 }
 
 export function ResultSection({ result, onReset }: ResultSectionProps) {
-  const { score, category, metrics } = result
-  const styles = categoryStyles[category]
-  const Icon = styles.icon
+  const deepfakeProbability = result.metrics[1].value ?? 0;
+
+  const score = Math.round(100 - deepfakeProbability);
+
+  const category =
+    deepfakeProbability >= 70
+      ? 'fake'
+      : deepfakeProbability >= 40
+        ? 'suspicious'
+        : 'live';
+
+  const metrics = result.metrics ?? [
+    {
+      label: 'Deepfake Risk',
+      value: Math.round(deepfakeProbability),
+    },
+    {
+      label: 'Realness Score',
+      value: score,
+    },
+    {
+      label: 'Frames Analyzed',
+      value: Math.min(result.raw_summary?.frames_analyzed ?? 0, 100),
+    },
+    {
+      label: 'Max Fake Score',
+      value: Math.round((result.raw_summary?.max_fake_score ?? 0) * 100),
+    },
+    {
+      label: 'Mean Fake Score',
+      value: Math.round((result.raw_summary?.mean_fake_score ?? 0) * 100),
+    },
+  ];
+  const styles = categoryStyles[category];
+  const Icon = styles.icon;
 
   return (
     <motion.section
@@ -146,7 +175,7 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {metrics.map((metric, i) => {
-              const MetricIcon = metricIcons[i] ?? ScanFace
+              const MetricIcon = metricIcons[i] ?? ScanFace;
               return (
                 <motion.div
                   key={metric.label}
@@ -158,7 +187,9 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <MetricIcon className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm text-slate-300">{metric.label}</span>
+                      <span className="text-sm text-slate-300">
+                        {metric.label}
+                      </span>
                     </div>
                     <span
                       className={`font-mono text-sm font-semibold ${getMetricColor(metric.value)}`}
@@ -175,7 +206,7 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
                     />
                   </div>
                 </motion.div>
-              )
+              );
             })}
           </div>
 
@@ -198,5 +229,5 @@ export function ResultSection({ result, onReset }: ResultSectionProps) {
         </div>
       </div>
     </motion.section>
-  )
+  );
 }
